@@ -135,7 +135,7 @@ func (db *HistoricDB) OpenTrie(root common.Hash) (Trie, error) {
 
 // OpenStorageTrie opens the storage trie of an account. It's not supported by
 // historic database.
-func (db *HistoricDB) OpenStorageTrie(stateRoot common.Hash, address common.Address, root common.Hash, trie Trie) (Trie, error) {
+func (db *HistoricDB) OpenStorageTrie(stateRoot common.Hash, address common.Address, addrHash []byte, root common.Hash, trie Trie) (Trie, error) {
 	return nil, errors.New("not implemented")
 }
 

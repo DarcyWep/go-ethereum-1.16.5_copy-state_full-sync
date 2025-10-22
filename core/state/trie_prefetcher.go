@@ -361,7 +361,7 @@ func (sf *subfetcher) openTrie() error {
 		sf.trie = tr
 		return nil
 	}
-	tr, err := sf.db.OpenStorageTrie(sf.state, sf.addr, sf.root, nil)
+	tr, err := sf.db.OpenStorageTrie(sf.state, sf.addr, nil, sf.root, nil)
 	if err != nil {
 		log.Warn("Trie prefetcher failed opening storage trie", "root", sf.root, "err", err)
 		return err

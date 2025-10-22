@@ -53,7 +53,7 @@ type Database interface {
 	OpenTrie(root common.Hash) (Trie, error)
 
 	// OpenStorageTrie opens the storage trie of an account.
-	OpenStorageTrie(stateRoot common.Hash, address common.Address, root common.Hash, trie Trie) (Trie, error)
+	OpenStorageTrie(stateRoot common.Hash, address common.Address, addrHash []byte, root common.Hash, trie Trie) (Trie, error)
 
 	// PointCache returns the cache holding points used in verkle tree key computation
 	PointCache() *utils.PointCache
@@ -253,11 +253,19 @@ func (db *CachingDB) OpenTrie(root common.Hash) (Trie, error) {
 }
 
 // OpenStorageTrie opens the storage trie of an account.
-func (db *CachingDB) OpenStorageTrie(stateRoot common.Hash, address common.Address, root common.Hash, self Trie) (Trie, error) {
+func (db *CachingDB) OpenStorageTrie(stateRoot common.Hash, address common.Address, addrHash []byte, root common.Hash, self Trie) (Trie, error) {
 	if db.triedb.IsVerkle() {
 		return self, nil
 	}
-	tr, err := trie.NewStateTrie(trie.StorageTrieID(stateRoot, crypto.Keccak256Hash(address.Bytes()), root), db.triedb)
+	var (
+		tr  *trie.StateTrie
+		err error
+	)
+	if addrHash != nil {
+		tr, err = trie.NewStateTrie(trie.StorageTrieID(stateRoot, common.BytesToHash(addrHash), root), db.triedb)
+	} else {
+		tr, err = trie.NewStateTrie(trie.StorageTrieID(stateRoot, crypto.Keccak256Hash(address.Bytes()), root), db.triedb)
+	}
 	if err != nil {
 		return nil, err
 	}

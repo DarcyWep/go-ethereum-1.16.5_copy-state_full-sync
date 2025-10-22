@@ -174,7 +174,7 @@ func (s *StateDB) DumpToCollector(c DumpCollector, conf *DumpConfig) (nextKey []
 		if !conf.SkipStorage {
 			account.Storage = make(map[common.Hash]string)
 
-			storageTr, err := s.db.OpenStorageTrie(s.originalRoot, addr, obj.Root(), tr)
+			storageTr, err := s.db.OpenStorageTrie(s.originalRoot, addr, nil, obj.Root(), tr)
 			if err != nil {
 				log.Error("Failed to load storage trie", "err", err)
 				continue

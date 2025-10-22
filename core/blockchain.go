@@ -58,6 +58,9 @@ import (
 )
 
 var (
+	record0                 = big.NewInt(21000000)
+	record1                 = big.NewInt(22000000)
+	recordStateBlock        = big.NewInt(500000) // 超过2200W的每50W存一次
 	headBlockGauge          = metrics.NewRegisteredGauge("chain/head/block", nil)
 	headHeaderGauge         = metrics.NewRegisteredGauge("chain/head/header", nil)
 	headFastBlockGauge      = metrics.NewRegisteredGauge("chain/head/receipt", nil)
@@ -353,6 +356,7 @@ func NewBlockChain(db ethdb.Database, genesis *Genesis, engine consensus.Engine,
 	if err != nil {
 		return nil, err
 	}
+	//fmt.Println("enableVerkle:", enableVerkle)
 	triedb := triedb.NewDatabase(db, cfg.triedbConfig(enableVerkle))
 
 	// Write the supplied genesis to the database if it has not been initialized
@@ -1948,6 +1952,15 @@ func (bc *BlockChain) insertChain(chain types.Blocks, setHead bool, makeWitness 
 			// Only count canonical blocks for GC processing time
 			bc.gcproc += res.procTime
 
+			number, bigInt0 := new(big.Int).Set(block.Number()), big.NewInt(0)
+			dividedNum, divisor := new(big.Int).Set(number), new(big.Int).Set(recordStateBlock)
+			quotient, remainder := new(big.Int), new(big.Int)
+			quotient.DivMod(dividedNum, divisor, remainder)
+			if number.Cmp(record0) == 0 || (number.Cmp(record1) >= 0 && remainder.Cmp(bigInt0) == 0) { // 特定区块存储一次状态树，看看能不能读到
+				//bc.SaveSpecificBlockState()
+				bc.tryStartCopyWorker()
+			}
+
 		case SideStatTy:
 			log.Debug("Inserted forked block", "number", block.Number(), "hash", block.Hash(),
 				"diff", block.Difficulty(), "elapsed", common.PrettyDuration(time.Since(start)),
@@ -2838,3 +2851,44 @@ func (bc *BlockChain) GetTrieFlushInterval() time.Duration {
 func (bc *BlockChain) StateSizer() *state.SizeTracker {
 	return bc.stateSizer
 }
+
+//func (bc *BlockChain) SaveSpecificBlockState() {
+//
+//	// Ensure that the entirety of the state snapshot is journalled to disk.
+//	var snapBase common.Hash
+//	if bc.snaps != nil {
+//		var err error
+//		if snapBase, err = bc.snaps.Journal(bc.CurrentBlock().Root); err != nil {
+//			log.Error("Failed to journal state snapshot", "err", err)
+//		}
+//		bc.snaps.Release()
+//	}
+//	if bc.triedb.Scheme() == rawdb.PathScheme {
+//		// Ensure that the in-memory trie nodes are journaled to disk properly.
+//		if err := bc.triedb.Journal(bc.CurrentBlock().Root); err != nil {
+//			log.Info("Failed to journal in-memory trie nodes", "err", err)
+//		}
+//	} else {
+//		// Ensure the state of a recent block is also stored to disk before exiting.
+//		// We're writing three different states to catch different restart scenarios:
+//		//  - HEAD:     So we don't need to reprocess any blocks in the general case
+//		//  - HEAD-1:   So we don't do large reorgs if our HEAD becomes an uncle
+//		//  - HEAD-127: So we have a hard limit on the number of blocks reexecuted
+//		if !bc.cfg.ArchiveMode {
+//			triedb := bc.triedb
+//
+//			number := bc.CurrentBlock().Number.Uint64()
+//			block := bc.GetBlockByNumber(number)
+//			log.RecordLog().Info("Writing cached state to disk", "block", block.Number(), "hash", block.Hash(), "root", block.Root())
+//			if err := triedb.Commit(block.Root(), false); err != nil {
+//				log.RecordLog().Error("Failed to commit recent state trie", "err", err)
+//			}
+//
+//			if snapBase != (common.Hash{}) {
+//				if err := triedb.Commit(snapBase, false); err != nil {
+//					log.RecordLog().Error("Failed to commit recent state trie", "err", err)
+//				}
+//			}
+//		}
+//	}
+//}

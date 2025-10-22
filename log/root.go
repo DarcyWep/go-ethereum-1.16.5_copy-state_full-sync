@@ -7,12 +7,24 @@ import (
 )
 
 var (
-	rootLock sync.RWMutex
-	root     Logger
+	rootLock  sync.RWMutex
+	root      Logger
+	recordLog Logger
 )
 
 func init() {
 	root = &logger{slog.New(DiscardHandler())}
+	f, err := os.OpenFile("../record.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o644)
+	if err != nil {
+		panic(err)
+	}
+
+	handler := slog.NewTextHandler(f, nil)
+	recordLog = &logger{slog.New(handler)}
+}
+
+func RecordLog() Logger {
+	return recordLog
 }
 
 // SetDefault sets the default global logger
