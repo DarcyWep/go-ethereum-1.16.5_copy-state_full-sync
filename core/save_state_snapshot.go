@@ -17,14 +17,6 @@ import (
 	"github.com/ethereum/go-ethereum/triedb"
 )
 
-const (
-	dstPath = "/data/ethereum/state_snapshot"
-	//batchSize         = 5000
-	newLevelDBCache   = 8092
-	newLevelDBHandles = 1024
-	maxBatchSize      = 4 * 1024 * 1024 * 1024 // 4GB batch write
-)
-
 // tryStartCopyWorker 尝试启动一个状态复制 worker（只允许单例）
 func (bc *BlockChain) tryStartCopyWorker() bool {
 	block := bc.CurrentBlock() // 当前区块
@@ -33,7 +25,7 @@ func (bc *BlockChain) tryStartCopyWorker() bool {
 		log.RecordLog().Error("tryStartCopyWorker oldStateDB state.New failed", "err", err)
 		return false
 	}
-	newStatePath := filepath.Join(dstPath, "snapshot_"+block.Number.String())
+	newStatePath := filepath.Join(common.DstPath, "snapshot_"+block.Number.String())
 	//checkpointFile := filepath.Join(dstPath, "state_copy_checkpoint"+block.Number.String()+".hex")
 
 	log.RecordLog().Info("Starting state copy for block " + block.Number.String() + " root=" + block.Root.Hex())
@@ -54,7 +46,7 @@ func (bc *BlockChain) tryStartCopyWorker() bool {
 
 func copyStateBatchedFromRoot(oldStateDB *state.StateDB, root common.Hash, newStatePath string) error {
 	// 打开/创建新的链数据库
-	newLevelDb, err := leveldb.New(newStatePath, newLevelDBCache, newLevelDBHandles, "state_snapshot", false)
+	newLevelDb, err := leveldb.New(newStatePath, common.NewLevelDBCache, common.NewLevelDBHandles, "state_snapshot", false)
 	if err != nil {
 		return fmt.Errorf("open newLevelDb: " + err.Error())
 	}
@@ -102,7 +94,7 @@ func copyStateBatchedFromRoot(oldStateDB *state.StateDB, root common.Hash, newSt
 			}
 			nodeCount++
 
-			if batch.ValueSize() >= maxBatchSize {
+			if batch.ValueSize() >= common.MaxBatchSize {
 				err := batch.Write()
 				if err != nil {
 					return fmt.Errorf("state trie batch write error " + err.Error())
@@ -164,7 +156,7 @@ func copyStateBatchedFromRoot(oldStateDB *state.StateDB, root common.Hash, newSt
 				if err != nil {
 					return fmt.Errorf("stroage trie batch put error " + err.Error())
 				}
-				if batch.ValueSize() >= maxBatchSize {
+				if batch.ValueSize() >= common.MaxBatchSize {
 					err := batch.Write()
 					if err != nil {
 						return fmt.Errorf("storage trie batch write error " + err.Error())

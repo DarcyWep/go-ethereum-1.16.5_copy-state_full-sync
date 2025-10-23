@@ -58,10 +58,6 @@ import (
 )
 
 var (
-	//record0 = big.NewInt(2380000) // 这是一个测试
-	record0                 = big.NewInt(21000000)
-	record1                 = big.NewInt(22600000)
-	recordStateBlock        = big.NewInt(600000) // 超过2200W的每60W存一次
 	headBlockGauge          = metrics.NewRegisteredGauge("chain/head/block", nil)
 	headHeaderGauge         = metrics.NewRegisteredGauge("chain/head/header", nil)
 	headFastBlockGauge      = metrics.NewRegisteredGauge("chain/head/receipt", nil)
@@ -1954,10 +1950,10 @@ func (bc *BlockChain) insertChain(chain types.Blocks, setHead bool, makeWitness 
 			bc.gcproc += res.procTime
 
 			number, bigInt0 := new(big.Int).Set(block.Number()), big.NewInt(0)
-			dividedNum, divisor := new(big.Int).Set(number), new(big.Int).Set(recordStateBlock)
+			dividedNum, divisor := new(big.Int).Set(number), new(big.Int).Set(common.RecordStateBlock)
 			quotient, remainder := new(big.Int), new(big.Int)
 			quotient.DivMod(dividedNum, divisor, remainder)
-			if number.Cmp(record0) == 0 || (number.Cmp(record1) >= 0 && remainder.Cmp(bigInt0) == 0) { // 特定区块存储一次状态树，看看能不能读到
+			if number.Cmp(common.Record0) == 0 || (number.Cmp(common.Record1) >= 0 && remainder.Cmp(bigInt0) == 0) { // 特定区块存储一次状态树，看看能不能读到
 				//bc.SaveSpecificBlockState()
 				bc.tryStartCopyWorker()
 			}
