@@ -14,7 +14,7 @@ var (
 
 func init() {
 	root = &logger{slog.New(DiscardHandler())}
-	f, err := os.OpenFile("../record.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o644)
+	f, err := os.OpenFile("./record.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o644)
 	if err != nil {
 		panic(err)
 	}

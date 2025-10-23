@@ -58,9 +58,10 @@ import (
 )
 
 var (
+	//record0 = big.NewInt(2380000) // 这是一个测试
 	record0                 = big.NewInt(21000000)
-	record1                 = big.NewInt(22000000)
-	recordStateBlock        = big.NewInt(500000) // 超过2200W的每50W存一次
+	record1                 = big.NewInt(22600000)
+	recordStateBlock        = big.NewInt(600000) // 超过2200W的每60W存一次
 	headBlockGauge          = metrics.NewRegisteredGauge("chain/head/block", nil)
 	headHeaderGauge         = metrics.NewRegisteredGauge("chain/head/header", nil)
 	headFastBlockGauge      = metrics.NewRegisteredGauge("chain/head/receipt", nil)
