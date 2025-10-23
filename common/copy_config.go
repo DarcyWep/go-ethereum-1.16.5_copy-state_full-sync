@@ -15,3 +15,5 @@ const (
 	NewLevelDBHandles = 1024
 	MaxBatchSize      = 4 * 1024 * 1024 * 1024 // 4GB batch write
 )
+
+const CopyRecordPath = "/data/ethereum/record.log"
